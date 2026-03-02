@@ -25,107 +25,100 @@ export default function Toolbar({ stageRef }: Props) {
   const setDesignName = useDesignStore((s) => s.setDesignName);
   const boundary = useDesignStore((s) => s.boundary);
   const clearBoundary = useDesignStore((s) => s.clearBoundary);
+  const pathwayWidthFt = useCanvasStore((s) => s.pathwayWidthFt);
+  const setPathwayWidthFt = useCanvasStore((s) => s.setPathwayWidthFt);
   const pushSnapshot = useHistoryStore((s) => s.pushSnapshot);
 
+  const toolBtn = (tool: typeof activeTool, label: string, title?: string) => (
+    <button
+      className={`px-2 py-1 rounded text-xs transition-colors ${
+        activeTool === tool
+          ? 'bg-amber-500/20 border border-amber-500/40 text-amber-300'
+          : 'text-white/60 hover:bg-white/8 hover:text-white/90'
+      }`}
+      onClick={() => setActiveTool(tool)}
+      title={title}
+    >
+      {label}
+    </button>
+  );
+
   return (
-    <div className="h-12 bg-gray-800 text-white flex items-center px-4 gap-2 shrink-0">
+    <div className="h-12 bg-[#1c1c1e] border-b border-white/10 text-white flex items-center px-4 gap-2 shrink-0">
       <input
-        className="bg-transparent text-white font-semibold text-sm border-b border-transparent hover:border-gray-500 focus:border-blue-400 focus:outline-none px-1 w-40"
+        className="bg-transparent text-white font-semibold text-sm border-b border-transparent hover:border-white/20 focus:border-amber-400/60 focus:outline-none px-1 w-40 transition-colors"
         value={designName}
         onChange={(e) => setDesignName(e.target.value)}
       />
 
-      <div className="w-px h-6 bg-gray-600 mx-2" />
+      <div className="w-px h-5 bg-white/10 mx-1" />
 
-      <button
-        className={`px-2 py-1 rounded text-xs ${activeTool === 'select' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
-        onClick={() => setActiveTool('select')}
-        title="Select (V)"
-      >
-        Select
-      </button>
-      <button
-        className={`px-2 py-1 rounded text-xs ${activeTool === 'boundary' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
-        onClick={() => setActiveTool('boundary')}
-        title="Draw Boundary"
-      >
-        Boundary
-      </button>
+      <span className="text-xs text-white/25 font-medium">Tools</span>
+      {toolBtn('select', 'Select', 'Select (V)')}
+      {toolBtn('pan', 'Pan', 'Pan (H)')}
+
+      <div className="w-px h-5 bg-white/10 mx-1" />
+
+      <span className="text-xs text-white/25 font-medium">Insert</span>
+      {toolBtn('boundary', 'Boundary', 'Draw Boundary')}
       {boundary.length > 0 && (
         <button
-          className="px-2 py-1 rounded text-xs text-red-300 hover:bg-red-900"
+          className="px-2 py-1 rounded text-xs text-red-400/80 hover:bg-red-500/15 transition-colors"
           onClick={() => { pushSnapshot(); clearBoundary(); }}
           title="Clear Boundary"
         >
-          ✕ Clear Boundary
+          ✕ Boundary
         </button>
       )}
-      <button
-        className={`px-2 py-1 rounded text-xs ${activeTool === 'structure' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
-        onClick={() => setActiveTool('structure')}
-        title="Draw Fixed Structure"
-      >
-        Shapes
-</button>
-      <button
-        className={`px-2 py-1 rounded text-xs ${activeTool === 'pan' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
-        onClick={() => setActiveTool('pan')}
-        title="Pan (H)"
-      >
-        Pan
-      </button>
-      <button
-        className={`px-2 py-1 rounded text-xs ${activeTool === 'sun_zone' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
-        onClick={() => setActiveTool('sun_zone')}
-        title="Draw Sun Zone"
-      >
-        Sun Zone
-      </button>
+      {toolBtn('structure', 'Shapes', 'Draw Fixed Structure')}
+      {toolBtn('pathway', 'Pathway', 'Draw Pathway (P)')}
+      {activeTool === 'pathway' && (
+        <div className="flex items-center gap-1 text-xs text-white/60">
+          <span className="text-white/30">W:</span>
+          <input
+            type="number"
+            min={0.5}
+            max={20}
+            step={0.5}
+            value={pathwayWidthFt}
+            onChange={(e) => setPathwayWidthFt(+e.target.value)}
+            className="w-10 px-1 py-0.5 bg-[#2c2c2e] border border-white/15 rounded text-white text-center"
+          />
+          <span className="text-white/30">ft</span>
+        </div>
+      )}
+      {toolBtn('sun_zone', 'Sun Zone', 'Draw Sun Zone')}
 
-      <div className="w-px h-6 bg-gray-600 mx-2" />
+      <div className="w-px h-5 bg-white/10 mx-1" />
 
-      <button className="px-2 py-1 rounded text-xs hover:bg-gray-700" onClick={undo} title="Undo (Ctrl+Z)">
-        Undo
-      </button>
-      <button className="px-2 py-1 rounded text-xs hover:bg-gray-700" onClick={redo} title="Redo (Ctrl+Y)">
-        Redo
-      </button>
+      <button className="px-2 py-1 rounded text-xs text-white/60 hover:bg-white/8 hover:text-white/90 transition-colors" onClick={undo} title="Undo (Ctrl+Z)">Undo</button>
+      <button className="px-2 py-1 rounded text-xs text-white/60 hover:bg-white/8 hover:text-white/90 transition-colors" onClick={redo} title="Redo (Ctrl+Y)">Redo</button>
 
-      <div className="w-px h-6 bg-gray-600 mx-2" />
+      <div className="w-px h-5 bg-white/10 mx-1" />
 
       <button
-        className={`px-2 py-1 rounded text-xs ${showGrid ? 'bg-gray-600' : 'hover:bg-gray-700'}`}
+        className={`px-2 py-1 rounded text-xs transition-colors ${showGrid ? 'bg-white/10 text-white/90' : 'text-white/40 hover:bg-white/8 hover:text-white/70'}`}
         onClick={toggleGrid}
-      >
-        Grid
-      </button>
+      >Grid</button>
       <button
-        className={`px-2 py-1 rounded text-xs ${snapToGrid ? 'bg-gray-600' : 'hover:bg-gray-700'}`}
+        className={`px-2 py-1 rounded text-xs transition-colors ${snapToGrid ? 'bg-white/10 text-white/90' : 'text-white/40 hover:bg-white/8 hover:text-white/70'}`}
         onClick={toggleSnap}
-      >
-        Snap
-      </button>
+      >Snap</button>
       <button
-        className={`px-2 py-1 rounded text-xs ${showMeasurements ? 'bg-gray-600' : 'hover:bg-gray-700'}`}
+        className={`px-2 py-1 rounded text-xs transition-colors ${showMeasurements ? 'bg-white/10 text-white/90' : 'text-white/40 hover:bg-white/8 hover:text-white/70'}`}
         onClick={toggleMeasurements}
-      >
-        Measures
-      </button>
+      >Measures</button>
 
       <div className="flex-1" />
 
-      <div className="flex items-center gap-1 text-xs">
-        <button className="px-1 hover:bg-gray-700 rounded" onClick={() => setZoom(zoom / 1.2)}>
-          -
-        </button>
-        <span className="w-12 text-center">{Math.round(zoom * 100)}%</span>
-        <button className="px-1 hover:bg-gray-700 rounded" onClick={() => setZoom(zoom * 1.2)}>
-          +
-        </button>
+      <div className="flex items-center gap-1 text-xs text-white/60">
+        <button className="px-1.5 py-0.5 hover:bg-white/8 rounded transition-colors" onClick={() => setZoom(zoom / 1.2)}>−</button>
+        <span className="w-12 text-center text-white/50">{Math.round(zoom * 100)}%</span>
+        <button className="px-1.5 py-0.5 hover:bg-white/8 rounded transition-colors" onClick={() => setZoom(zoom * 1.2)}>+</button>
       </div>
 
       <button
-        className="px-2 py-1 rounded text-xs bg-green-600 hover:bg-green-700"
+        className="px-2 py-1 rounded text-xs bg-green-700 hover:bg-green-600 text-white transition-colors"
         onClick={() => stageRef.current && exportToPng(stageRef.current)}
       >
         Export PNG

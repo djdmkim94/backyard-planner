@@ -31,7 +31,7 @@ export default function MeasurementLayer() {
         <Group key={`m-${a.id}-${b.id}`} listening={false}>
           <Line
             points={[ax, ay, bx, by]}
-            stroke="rgba(37,99,235,0.3)"
+            stroke="rgba(146,100,14,0.35)"
             strokeWidth={1}
             dash={[4, 4]}
           />
@@ -40,7 +40,7 @@ export default function MeasurementLayer() {
             y={my - 8}
             text={formatUnit(dist, unitSystem)}
             fontSize={10}
-            fill="#2563eb"
+            fill="#92660A"
             padding={2}
           />
         </Group>

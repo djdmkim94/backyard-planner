@@ -34,15 +34,15 @@ export default function BedPanel() {
 
   return (
     <div>
-      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+      <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-2">
         Bed Templates
       </h3>
-      <div className="space-y-1 mb-4">
+      <div className="space-y-0.5 mb-4">
         {BED_TEMPLATES.map((t) => (
           <button
             key={t.id}
             onClick={() => handleAdd(t.id)}
-            className="w-full text-left px-3 py-2 rounded text-sm hover:bg-gray-100 flex items-center gap-2 transition-colors"
+            className="w-full text-left px-3 py-2 rounded text-sm hover:bg-[#3a3a3c] flex items-center gap-2 transition-colors text-white/80"
           >
             <span className="w-4 h-4 rounded-sm shrink-0" style={{ backgroundColor: t.color }} />
             <span>{t.label}</span>
@@ -50,8 +50,8 @@ export default function BedPanel() {
         ))}
       </div>
 
-      <div className="border-t pt-3">
-        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+      <div className="border-t border-white/10 pt-3">
+        <h4 className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-2">
           Custom Bed
         </h4>
 
@@ -63,8 +63,8 @@ export default function BedPanel() {
               onClick={() => setShape(opt.value)}
               className={`flex-1 py-1.5 rounded text-xs flex flex-col items-center gap-0.5 border transition-colors ${
                 shape === opt.value
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
-                  : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                  ? 'border-amber-500/50 bg-amber-500/15 text-amber-300'
+                  : 'border-white/10 hover:border-white/20 text-white/60'
               }`}
             >
               <span className="text-base leading-none">{opt.icon}</span>
@@ -76,10 +76,10 @@ export default function BedPanel() {
         {/* Dimensions */}
         <div className={`grid gap-2 mb-2 ${shape === 'circle' ? 'grid-cols-1' : 'grid-cols-2'}`}>
           <label className="block">
-            <span className="text-xs text-gray-500">{shape === 'circle' ? 'Diameter (ft)' : 'Width (ft)'}</span>
+            <span className="text-xs text-white/50">{shape === 'circle' ? 'Diameter (ft)' : 'Width (ft)'}</span>
             <input
               type="number"
-              className="w-full mt-0.5 px-2 py-1 border rounded text-sm"
+              className="w-full mt-0.5 px-2 py-1 bg-[#2c2c2e] border border-white/10 rounded text-sm text-white"
               value={widthFt}
               min={0.5}
               step={0.5}
@@ -88,10 +88,10 @@ export default function BedPanel() {
           </label>
           {shape !== 'circle' && (
             <label className="block">
-              <span className="text-xs text-gray-500">Height (ft)</span>
+              <span className="text-xs text-white/50">Height (ft)</span>
               <input
                 type="number"
-                className="w-full mt-0.5 px-2 py-1 border rounded text-sm"
+                className="w-full mt-0.5 px-2 py-1 bg-[#2c2c2e] border border-white/10 rounded text-sm text-white"
                 value={heightFt}
                 min={0.5}
                 step={0.5}
@@ -103,9 +103,9 @@ export default function BedPanel() {
 
         {/* Label */}
         <label className="block mb-2">
-          <span className="text-xs text-gray-500">Label</span>
+          <span className="text-xs text-white/50">Label</span>
           <input
-            className="w-full mt-0.5 px-2 py-1 border rounded text-sm"
+            className="w-full mt-0.5 px-2 py-1 bg-[#2c2c2e] border border-white/10 rounded text-sm text-white"
             value={label}
             onChange={(e) => setLabel(e.target.value)}
           />
@@ -113,10 +113,10 @@ export default function BedPanel() {
 
         {/* Color */}
         <label className="block mb-2">
-          <span className="text-xs text-gray-500">Color</span>
+          <span className="text-xs text-white/50">Color</span>
           <input
             type="color"
-            className="w-full mt-0.5 h-8 cursor-pointer"
+            className="w-full mt-0.5 h-8 cursor-pointer rounded"
             value={color}
             onChange={(e) => setColor(e.target.value)}
           />
@@ -124,7 +124,7 @@ export default function BedPanel() {
 
         <button
           onClick={handleAddCustom}
-          className="w-full px-3 py-1.5 bg-green-600 text-white rounded text-sm hover:bg-green-700"
+          className="w-full px-3 py-1.5 bg-green-700 text-white rounded text-sm hover:bg-green-600 transition-colors"
         >
           + Add to Canvas
         </button>

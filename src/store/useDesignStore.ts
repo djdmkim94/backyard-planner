@@ -1,10 +1,11 @@
 import { create } from 'zustand';
 import { nanoid } from 'nanoid';
-import type { GardenBed, Marker, SunZone, BoundaryPoint, Structure, BedShapeType, Design } from '../types/garden';
+import type { GardenBed, Marker, SunZone, SunWindowConfig, BoundaryPoint, Structure, BedShapeType, Design, FixedFeature, Pathway, BoundarySegmentType } from '../types/garden';
 import { DEFAULT_PIXELS_PER_FOOT } from '../constants/canvas';
 import { BED_TEMPLATES } from '../constants/beds';
 import { MARKER_TEMPLATES } from '../constants/markers';
 import type { MarkerType } from '../types/garden';
+import { legacyExposureToWindows, smartWinterDefault } from '../utils/sun';
 
 interface DesignState {
   beds: GardenBed[];
@@ -12,6 +13,7 @@ interface DesignState {
   sunZones: SunZone[];
   boundary: BoundaryPoint[];
   structures: Structure[];
+  fixedFeatures: FixedFeature[];
   selectedId: string | null;
   designName: string;
 
@@ -23,13 +25,22 @@ interface DesignState {
   addMarker: (type: MarkerType, x?: number, y?: number) => void;
   updateMarker: (id: string, updates: Partial<Marker>) => void;
   removeMarker: (id: string) => void;
-  addSunZone: (points: number[], exposure: SunZone['exposure']) => void;
+  addSunZone: (points: number[], summer: SunWindowConfig, winter: SunWindowConfig, label: string) => void;
+  updateSunZone: (id: string, updates: Partial<Pick<SunZone, 'label' | 'summer' | 'winter'>>) => void;
   removeSunZone: (id: string) => void;
   setBoundary: (points: BoundaryPoint[]) => void;
   clearBoundary: () => void;
+  updateBoundarySegment: (index: number, type: BoundarySegmentType | undefined) => void;
   addStructure: (drawnPoints: Array<{ x: number; y: number }>) => void;
   updateStructure: (id: string, updates: Partial<Structure>) => void;
   removeStructure: (id: string) => void;
+  addFixedFeature: (feature: Omit<FixedFeature, 'id'>) => void;
+  updateFixedFeature: (id: string, updates: Partial<FixedFeature>) => void;
+  removeFixedFeature: (id: string) => void;
+  pathways: Pathway[];
+  addPathway: (pathway: Omit<Pathway, 'id'>) => void;
+  updatePathway: (id: string, updates: Partial<Pathway>) => void;
+  removePathway: (id: string) => void;
   setDesignName: (name: string) => void;
   getSnapshot: () => DesignSnapshot;
   restoreSnapshot: (snapshot: DesignSnapshot) => void;
@@ -43,6 +54,8 @@ export interface DesignSnapshot {
   sunZones: SunZone[];
   boundary: BoundaryPoint[];
   structures: Structure[];
+  fixedFeatures: FixedFeature[];
+  pathways: Pathway[];
 }
 
 export const useDesignStore = create<DesignState>((set, get) => ({
@@ -51,6 +64,8 @@ export const useDesignStore = create<DesignState>((set, get) => ({
   sunZones: [],
   boundary: [],
   structures: [],
+  fixedFeatures: [],
+  pathways: [],
   selectedId: null,
   designName: 'My Garden',
 
@@ -128,16 +143,25 @@ export const useDesignStore = create<DesignState>((set, get) => ({
       selectedId: s.selectedId === id ? null : s.selectedId,
     })),
 
-  addSunZone: (points, exposure) => {
-    const zone: SunZone = { id: nanoid(), points, exposure };
+  addSunZone: (points, summer, winter, label) => {
+    const zone: SunZone = { id: nanoid(), points, summer, winter, label };
     set((s) => ({ sunZones: [...s.sunZones, zone] }));
   },
+
+  updateSunZone: (id, updates) =>
+    set((s) => ({
+      sunZones: s.sunZones.map((z) => (z.id === id ? { ...z, ...updates } : z)),
+    })),
 
   removeSunZone: (id) =>
     set((s) => ({ sunZones: s.sunZones.filter((z) => z.id !== id) })),
 
   setBoundary: (points) => set({ boundary: points }),
   clearBoundary: () => set({ boundary: [] }),
+  updateBoundarySegment: (index, type) =>
+    set((s) => ({
+      boundary: s.boundary.map((p, i) => (i === index ? { ...p, segmentType: type } : p)),
+    })),
 
   addStructure: (drawnPoints) => {
     const cx = drawnPoints.reduce((s, p) => s + p.x, 0) / drawnPoints.length;
@@ -166,16 +190,49 @@ export const useDesignStore = create<DesignState>((set, get) => ({
       selectedId: s.selectedId === id ? null : s.selectedId,
     })),
 
+  addFixedFeature: (feature) => {
+    const ff: FixedFeature = { id: nanoid(), ...feature };
+    set((s) => ({ fixedFeatures: [...s.fixedFeatures, ff] }));
+  },
+
+  updateFixedFeature: (id, updates) =>
+    set((s) => ({
+      fixedFeatures: s.fixedFeatures.map((f) => (f.id === id ? { ...f, ...updates } : f)),
+    })),
+
+  removeFixedFeature: (id) =>
+    set((s) => ({ fixedFeatures: s.fixedFeatures.filter((f) => f.id !== id) })),
+
+  addPathway: (pathway) => {
+    const p: Pathway = { id: nanoid(), ...pathway };
+    set((s) => ({ pathways: [...s.pathways, p] }));
+  },
+
+  updatePathway: (id, updates) =>
+    set((s) => ({
+      pathways: s.pathways.map((p) => (p.id === id ? { ...p, ...updates } : p)),
+    })),
+
+  removePathway: (id) =>
+    set((s) => ({ pathways: s.pathways.filter((p) => p.id !== id) })),
+
   setDesignName: (name) => set({ designName: name }),
 
   getSnapshot: () => {
-    const { beds, markers, sunZones, boundary, structures } = get();
+    const { beds, markers, sunZones, boundary, structures, fixedFeatures, pathways } = get();
     return {
       beds: beds.map((b) => ({ ...b })),
       markers: markers.map((m) => ({ ...m })),
-      sunZones: sunZones.map((z) => ({ ...z, points: [...z.points] })),
+      sunZones: sunZones.map((z) => ({
+        ...z,
+        points: [...z.points],
+        summer: { ...z.summer },
+        winter: { ...z.winter },
+      })),
       boundary: boundary.map((p) => ({ ...p })),
       structures: structures.map((st) => ({ ...st, points: [...st.points] })),
+      fixedFeatures: fixedFeatures.map((f) => ({ ...f, points: [...f.points] })),
+      pathways: pathways.map((p) => ({ ...p, points: [...p.points] })),
     };
   },
 
@@ -186,18 +243,35 @@ export const useDesignStore = create<DesignState>((set, get) => ({
       sunZones: snapshot.sunZones,
       boundary: snapshot.boundary,
       structures: snapshot.structures,
+      fixedFeatures: snapshot.fixedFeatures,
+      pathways: snapshot.pathways,
     }),
 
-  loadDesign: (design) =>
+  loadDesign: (design) => {
+    const migratedZones = (design.sunZones ?? []).map((z: any) => {
+      if ('summer' in z && 'winter' in z) return z as SunZone;
+      // Legacy format: has `exposure` field
+      const windows = legacyExposureToWindows(z.exposure);
+      return {
+        id: z.id,
+        points: z.points,
+        label: z.label ?? 'Zone',
+        summer: windows,
+        winter: smartWinterDefault(windows),
+      } satisfies SunZone;
+    });
     set({
       beds: design.beds,
       markers: design.markers,
-      sunZones: design.sunZones,
+      sunZones: migratedZones,
       boundary: design.boundary,
       structures: design.structures ?? [],
+      fixedFeatures: design.fixedFeatures ?? [],
+      pathways: design.pathways ?? [],
       designName: design.name,
       selectedId: null,
-    }),
+    });
+  },
 
   clearAll: () =>
     set({
@@ -206,6 +280,8 @@ export const useDesignStore = create<DesignState>((set, get) => ({
       sunZones: [],
       boundary: [],
       structures: [],
+      fixedFeatures: [],
+      pathways: [],
       selectedId: null,
     }),
 }));

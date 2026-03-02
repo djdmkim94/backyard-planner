@@ -1,8 +1,10 @@
+import { useEffect } from 'react';
 import { Line, Circle, Group, Label, Tag, Text } from 'react-konva';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useCanvasStore } from '../../store/useCanvasStore';
 import { DEFAULT_PIXELS_PER_FOOT } from '../../constants/canvas';
 import type { UnitSystem } from '../../types/canvas';
+import type { BoundarySegmentType } from '../../types/garden';
 
 interface Props {
   previewPoint?: { x: number; y: number } | null;
@@ -14,7 +16,6 @@ function segDist(ax: number, ay: number, bx: number, by: number): number {
 
 function segAngleDeg(ax: number, ay: number, bx: number, by: number): number {
   const deg = Math.atan2(by - ay, bx - ax) * (180 / Math.PI);
-  // Normalize to 0–180 (line has no direction, 0°=horizontal, 90°=vertical)
   return Math.round(((deg % 180) + 180) % 180);
 }
 
@@ -59,7 +60,7 @@ function SegmentLabel({ ax, ay, bx, by, active, unit }: SegLabelProps) {
       listening={false}
     >
       <Tag
-        fill={active ? 'rgba(37,99,235,0.92)' : 'rgba(55,65,81,0.82)'}
+        fill={active ? 'rgba(37,99,235,0.92)' : 'rgba(80,60,30,0.85)'}
         cornerRadius={3}
       />
       <Text
@@ -73,46 +74,135 @@ function SegmentLabel({ ax, ay, bx, by, active, unit }: SegLabelProps) {
   );
 }
 
+function getSegmentStyle(type?: BoundarySegmentType) {
+  switch (type) {
+    case 'house_wall':
+      return { stroke: '#78716c', strokeWidth: 4, dash: undefined as number[] | undefined };
+    case 'fence':
+      return { stroke: '#92400e', strokeWidth: 2, dash: [5, 3] as number[] | undefined };
+    default:
+      return { stroke: '#44362A', strokeWidth: 2, dash: [8, 4] as number[] | undefined };
+  }
+}
+
 export default function BoundaryLayer({ previewPoint }: Props) {
   const boundary = useDesignStore((s) => s.boundary);
   const unitSystem = useCanvasStore((s) => s.unitSystem);
+  const activeTool = useCanvasStore((s) => s.activeTool);
+  const selectedBoundarySegment = useCanvasStore((s) => s.selectedBoundarySegment);
+  const setSelectedBoundarySegment = useCanvasStore((s) => s.setSelectedBoundarySegment);
+
+  // Deselect segment when switching away from select tool
+  useEffect(() => {
+    if (activeTool !== 'select') {
+      setSelectedBoundarySegment(null);
+    }
+  }, [activeTool, setSelectedBoundarySegment]);
 
   if (boundary.length === 0) return null;
 
   const isDrawing = !!previewPoint;
-  const displayPoints = previewPoint ? [...boundary, previewPoint] : boundary;
-  const flatPoints = displayPoints.flatMap((p) => [p.x, p.y]);
   const isClosed = !isDrawing && boundary.length >= 3;
 
+  // During drawing: simple non-interactive preview
+  if (isDrawing) {
+    const displayPoints = [...boundary, previewPoint!];
+    const flatPoints = displayPoints.flatMap((p) => [p.x, p.y]);
+    return (
+      <Group listening={false}>
+        <Line
+          points={flatPoints}
+          stroke="#44362A"
+          strokeWidth={2}
+          dash={[8, 4]}
+        />
+        {boundary.map((p, i) => (
+          <Circle key={i} x={p.x} y={p.y} radius={4} fill="#44362A" />
+        ))}
+        {boundary.length > 0 && (
+          <SegmentLabel
+            ax={boundary[boundary.length - 1].x}
+            ay={boundary[boundary.length - 1].y}
+            bx={previewPoint!.x}
+            by={previewPoint!.y}
+            active={true}
+            unit={unitSystem}
+          />
+        )}
+      </Group>
+    );
+  }
+
+  if (!isClosed) return null;
+
+  // Completed boundary: per-segment interactive rendering
+  const flatAll = boundary.flatMap((p) => [p.x, p.y]);
+
   return (
-    <Group listening={false}>
+    <Group>
+      {/* Fill polygon — non-interactive */}
       <Line
-        points={flatPoints}
-        closed={isClosed}
-        stroke="#374151"
-        strokeWidth={2}
-        dash={[8, 4]}
-        fill={isClosed ? 'rgba(34,197,94,0.05)' : 'transparent'}
+        points={flatAll}
+        closed
+        fill="rgba(34,197,94,0.07)"
+        stroke="transparent"
+        strokeWidth={0}
         listening={false}
       />
-      {isDrawing &&
-        boundary.map((p, i) => (
-          <Circle key={i} x={p.x} y={p.y} radius={4} fill="#374151" listening={false} />
+
+      {/* Segments */}
+      {boundary.map((p, i) => {
+        const nextI = (i + 1) % boundary.length;
+        const next = boundary[nextI];
+        const style = getSegmentStyle(p.segmentType);
+        const isSegSelected = selectedBoundarySegment === i;
+
+        return (
+          <Group key={i}>
+            {/* Selection highlight (behind) */}
+            {isSegSelected && (
+              <Line
+                points={[p.x, p.y, next.x, next.y]}
+                stroke="#f59e0b"
+                strokeWidth={5}
+                opacity={0.7}
+                lineCap="round"
+                listening={false}
+              />
+            )}
+            {/* Visual line */}
+            <Line
+              points={[p.x, p.y, next.x, next.y]}
+              stroke={style.stroke}
+              strokeWidth={style.strokeWidth}
+              dash={style.dash}
+              lineCap="round"
+              listening={false}
+            />
+            {/* Fat transparent hit target */}
+            <Line
+              points={[p.x, p.y, next.x, next.y]}
+              stroke="rgba(0,0,0,0)"
+              strokeWidth={14}
+              lineCap="round"
+              listening={true}
+              onClick={() => setSelectedBoundarySegment(i === selectedBoundarySegment ? null : i)}
+            />
+          </Group>
+        );
+      })}
+
+      {/* Segment labels — non-interactive */}
+      <Group listening={false}>
+        {boundary.slice(0, -1).map((p, i) => (
+          <SegmentLabel
+            key={`seg-${i}`}
+            ax={p.x} ay={p.y}
+            bx={boundary[i + 1].x} by={boundary[i + 1].y}
+            active={false}
+            unit={unitSystem}
+          />
         ))}
-
-      {/* Completed segment labels */}
-      {boundary.slice(0, -1).map((p, i) => (
-        <SegmentLabel
-          key={`seg-${i}`}
-          ax={p.x} ay={p.y}
-          bx={boundary[i + 1].x} by={boundary[i + 1].y}
-          active={false}
-          unit={unitSystem}
-        />
-      ))}
-
-      {/* Closing segment label once boundary is fully drawn */}
-      {isClosed && (
         <SegmentLabel
           ax={boundary[boundary.length - 1].x}
           ay={boundary[boundary.length - 1].y}
@@ -121,19 +211,7 @@ export default function BoundaryLayer({ previewPoint }: Props) {
           active={false}
           unit={unitSystem}
         />
-      )}
-
-      {/* Live active segment label while drawing */}
-      {isDrawing && boundary.length > 0 && (
-        <SegmentLabel
-          ax={boundary[boundary.length - 1].x}
-          ay={boundary[boundary.length - 1].y}
-          bx={previewPoint.x}
-          by={previewPoint.y}
-          active={true}
-          unit={unitSystem}
-        />
-      )}
+      </Group>
     </Group>
   );
 }

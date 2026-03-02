@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { ActiveTool, UnitSystem } from '../types/canvas';
+import type { Season, FixedFeatureType } from '../types/garden';
 import { MIN_ZOOM, MAX_ZOOM } from '../constants/canvas';
 
 interface CanvasState {
@@ -14,6 +15,12 @@ interface CanvasState {
   showPathwayGuides: boolean;
   unitSystem: UnitSystem;
   isPanning: boolean;
+  activeSeason: Season;
+  pendingZoneGeometry: number[] | null;
+  activeFixedFeatureType: FixedFeatureType | null;
+  concreteDrawMode: 'rect' | 'polygon';
+  pathwayWidthFt: number;
+  selectedBoundarySegment: number | null;
 
   setZoom: (zoom: number) => void;
   setPan: (x: number, y: number) => void;
@@ -25,6 +32,12 @@ interface CanvasState {
   togglePathwayGuides: () => void;
   toggleUnitSystem: () => void;
   setIsPanning: (v: boolean) => void;
+  setActiveSeason: (s: Season) => void;
+  setPendingZoneGeometry: (points: number[] | null) => void;
+  setActiveFixedFeatureType: (type: FixedFeatureType | null) => void;
+  setConcreteDrawMode: (mode: 'rect' | 'polygon') => void;
+  setPathwayWidthFt: (ft: number) => void;
+  setSelectedBoundarySegment: (index: number | null) => void;
 }
 
 export const useCanvasStore = create<CanvasState>((set) => ({
@@ -39,6 +52,12 @@ export const useCanvasStore = create<CanvasState>((set) => ({
   showPathwayGuides: true,
   unitSystem: 'feet',
   isPanning: false,
+  activeSeason: 'summer',
+  pendingZoneGeometry: null,
+  activeFixedFeatureType: null,
+  concreteDrawMode: 'rect',
+  pathwayWidthFt: 2,
+  selectedBoundarySegment: null,
 
   setZoom: (zoom) => set({ zoom: Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom)) }),
   setPan: (x, y) => set({ panX: x, panY: y }),
@@ -51,4 +70,10 @@ export const useCanvasStore = create<CanvasState>((set) => ({
   toggleUnitSystem: () =>
     set((s) => ({ unitSystem: s.unitSystem === 'feet' ? 'meters' : 'feet' })),
   setIsPanning: (v) => set({ isPanning: v }),
+  setActiveSeason: (s) => set({ activeSeason: s }),
+  setPendingZoneGeometry: (points) => set({ pendingZoneGeometry: points }),
+  setActiveFixedFeatureType: (type) => set({ activeFixedFeatureType: type }),
+  setConcreteDrawMode: (mode) => set({ concreteDrawMode: mode }),
+  setPathwayWidthFt: (ft) => set({ pathwayWidthFt: Math.max(0.5, ft) }),
+  setSelectedBoundarySegment: (index) => set({ selectedBoundarySegment: index }),
 }));

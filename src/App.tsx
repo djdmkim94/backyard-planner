@@ -17,7 +17,7 @@ function App() {
       <div className="flex flex-1 min-h-0">
         <Sidebar />
         <GardenCanvas stageRef={stageRef} />
-        <div className="w-56 bg-white border-l border-gray-200 flex flex-col overflow-y-auto shrink-0">
+        <div className="w-56 bg-[#1c1c1e] border-l border-white/10 flex flex-col overflow-y-auto shrink-0">
           <div className="p-3">
             <PropertiesPanel />
           </div>

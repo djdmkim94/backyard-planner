@@ -1,7 +1,7 @@
 export const DEFAULT_PIXELS_PER_FOOT = 24;
 export const METERS_PER_FOOT = 0.3048;
-export const GRID_LINE_COLOR = '#e5e7eb';
-export const GRID_LABEL_COLOR = '#9ca3af';
+export const GRID_LINE_COLOR = '#D6C98A';
+export const GRID_LABEL_COLOR = '#A08C5B';
 export const GRID_MAJOR_INTERVAL = 5;
 export const MIN_ZOOM = 0.25;
 export const MAX_ZOOM = 3;

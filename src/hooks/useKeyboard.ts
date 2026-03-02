@@ -60,6 +60,7 @@ export function useKeyboard() {
       // Tool shortcuts
       if (e.key === 'v' || e.key === 'V') setActiveTool('select');
       if (e.key === 'h' || e.key === 'H') setActiveTool('pan');
+      if (e.key === 'p' || e.key === 'P') setActiveTool('pathway');
     };
 
     window.addEventListener('keydown', handler);

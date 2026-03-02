@@ -31,6 +31,20 @@ export function getCorners(rect: Rect): { x: number; y: number }[] {
   }));
 }
 
+// Ray-casting algorithm: returns true if point (px, py) is inside the polygon
+// described by flat coordinate array [x1,y1,x2,y2,...]
+export function pointInPolygon(px: number, py: number, flatPoints: number[]): boolean {
+  let inside = false;
+  const n = flatPoints.length / 2;
+  for (let i = 0, j = n - 1; i < n; j = i++) {
+    const xi = flatPoints[i * 2], yi = flatPoints[i * 2 + 1];
+    const xj = flatPoints[j * 2], yj = flatPoints[j * 2 + 1];
+    const intersect = (yi > py) !== (yj > py) && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi;
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
 export function distanceBetweenBeds(a: GardenBed, b: GardenBed): number {
   const acx = a.x + a.width / 2;
   const acy = a.y + a.height / 2;

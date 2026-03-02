@@ -17,7 +17,7 @@ export default function StatusBar() {
   const suffix = unitSystem === 'feet' ? 'sq ft' : 'sq m';
 
   return (
-    <div className="h-7 bg-gray-100 border-t border-gray-300 flex items-center px-4 text-xs text-gray-600 gap-6 shrink-0">
+    <div className="h-7 bg-[#1c1c1e] border-t border-white/10 flex items-center px-4 text-xs text-white/50 gap-6 shrink-0">
       <span>Beds: {beds.length}</span>
       <span>Markers: {markers.length}</span>
       <span>
