@@ -23,6 +23,7 @@ import PathwayLayer from './PathwayLayer';
 import PlacementWarningsLayer from './PlacementWarningsLayer';
 import SelectionTransformer from './SelectionTransformer';
 import { getFixedFeatureConfig } from '../../constants/fixedFeatures';
+import { MANUAL_PRESETS } from '../../constants/sun';
 
 interface Props {
   stageRef: React.RefObject<Konva.Stage | null>;
@@ -84,7 +85,9 @@ export default function GardenCanvas({ stageRef }: Props) {
   const setBoundary = useDesignStore((s) => s.setBoundary);
   const addStructure = useDesignStore((s) => s.addStructure);
   const addFixedFeature = useDesignStore((s) => s.addFixedFeature);
+  const addSunZone = useDesignStore((s) => s.addSunZone);
   const addPathway = useDesignStore((s) => s.addPathway);
+  const activeSunPreset = useCanvasStore((s) => s.activeSunPreset);
   const pathwayWidthFt = useCanvasStore((s) => s.pathwayWidthFt);
   const pushSnapshot = useHistoryStore((s) => s.pushSnapshot);
   const activeFixedFeatureType = useCanvasStore((s) => s.activeFixedFeatureType);
@@ -434,7 +437,18 @@ export default function GardenCanvas({ stageRef }: Props) {
             const dy = Math.abs(pos.y - start.y);
             if (dx > 10 || dy > 10) {
               const points = rectToPoints(start, pos);
-              setPendingZoneGeometry(points);
+              const preset = activeSunPreset
+                ? MANUAL_PRESETS.find((p) => p.id === activeSunPreset)
+                : null;
+              if (preset) {
+                // Manual mode: auto-confirm with preset config, keep tool active
+                pushSnapshot();
+                const n = useDesignStore.getState().sunZones.length + 1;
+                addSunZone(points, preset.summer, preset.winter, `${preset.label} Zone ${n}`);
+              } else {
+                // Auto mode: show confirmation panel
+                setPendingZoneGeometry(points);
+              }
             }
           }
         }
@@ -465,7 +479,7 @@ export default function GardenCanvas({ stageRef }: Props) {
         setConcreteDragCurrent(null);
       }
     },
-    [setIsPanning, activeTool, activeFixedFeatureType, concreteDrawMode, stageRef, setPendingZoneGeometry, addFixedFeature, pushSnapshot]
+    [setIsPanning, activeTool, activeFixedFeatureType, concreteDrawMode, activeSunPreset, stageRef, setPendingZoneGeometry, addSunZone, addFixedFeature, pushSnapshot]
   );
 
   const canvasW = 2400;
@@ -489,11 +503,17 @@ export default function GardenCanvas({ stageRef }: Props) {
           Click to place corners · Hold <span className="bg-gray-600 px-1.5 py-0.5 rounded mx-0.5 font-mono">⇧ Shift</span> to snap to 45° · Double-click to close shape
         </div>
       )}
-      {activeTool === 'sun_zone' && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-gray-800/80 text-white text-xs px-3 py-1.5 rounded-full pointer-events-none z-10 whitespace-nowrap">
-          Click and drag to draw a sun zone
-        </div>
-      )}
+      {activeTool === 'sun_zone' && (() => {
+        const preset = activeSunPreset ? MANUAL_PRESETS.find((p) => p.id === activeSunPreset) : null;
+        const hint = preset
+          ? `Drag to paint ${preset.emoji} ${preset.label} · Click preset again to stop`
+          : 'Click and drag to draw a sun zone';
+        return (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-gray-800/80 text-white text-xs px-3 py-1.5 rounded-full pointer-events-none z-10 whitespace-nowrap">
+            {hint}
+          </div>
+        );
+      })()}
       {activeTool === 'fixed_feature' && activeFixedFeatureType && (() => {
         const cfg = getFixedFeatureConfig(activeFixedFeatureType);
         const hint = cfg.drawMode === 'point'

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ActiveTool, UnitSystem } from '../types/canvas';
+import type { ActiveTool, UnitSystem, SunPreset } from '../types/canvas';
 import type { Season, FixedFeatureType } from '../types/garden';
 import { MIN_ZOOM, MAX_ZOOM } from '../constants/canvas';
 
@@ -21,6 +21,7 @@ interface CanvasState {
   concreteDrawMode: 'rect' | 'polygon';
   pathwayWidthFt: number;
   selectedBoundarySegment: number | null;
+  activeSunPreset: SunPreset | null;
 
   setZoom: (zoom: number) => void;
   setPan: (x: number, y: number) => void;
@@ -38,6 +39,7 @@ interface CanvasState {
   setConcreteDrawMode: (mode: 'rect' | 'polygon') => void;
   setPathwayWidthFt: (ft: number) => void;
   setSelectedBoundarySegment: (index: number | null) => void;
+  setActiveSunPreset: (preset: SunPreset | null) => void;
 }
 
 export const useCanvasStore = create<CanvasState>((set) => ({
@@ -58,6 +60,7 @@ export const useCanvasStore = create<CanvasState>((set) => ({
   concreteDrawMode: 'rect',
   pathwayWidthFt: 2,
   selectedBoundarySegment: null,
+  activeSunPreset: null,
 
   setZoom: (zoom) => set({ zoom: Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom)) }),
   setPan: (x, y) => set({ panX: x, panY: y }),
@@ -76,4 +79,5 @@ export const useCanvasStore = create<CanvasState>((set) => ({
   setConcreteDrawMode: (mode) => set({ concreteDrawMode: mode }),
   setPathwayWidthFt: (ft) => set({ pathwayWidthFt: Math.max(0.5, ft) }),
   setSelectedBoundarySegment: (index) => set({ selectedBoundarySegment: index }),
+  setActiveSunPreset: (preset) => set({ activeSunPreset: preset }),
 }));
