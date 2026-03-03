@@ -47,11 +47,23 @@ export interface SunZone {
   id: string;
   points: number[];
   label: string;
+  sunWindows?: SunTimeWindow[];  // time-based windows (manual zones); absent = derive from summer
   summer: SunWindowConfig;
   winter: SunWindowConfig;
 }
 
 export type BoundarySegmentType = 'generic' | 'house_wall' | 'fence';
+
+export type SunWindowId = 'early_morning' | 'peak' | 'late_afternoon';
+export type SunClassification = 'full_sun' | 'part_sun' | 'part_shade' | 'full_shade';
+
+export interface SunTimeWindow {
+  id: SunWindowId;
+  label: string;
+  startHour: number;   // e.g. 6 = 6:00am
+  endHour: number;     // e.g. 10 = 10:00am
+  active: boolean;
+}
 
 export interface BoundaryPoint {
   x: number;

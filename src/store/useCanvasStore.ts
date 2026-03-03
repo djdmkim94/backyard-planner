@@ -22,6 +22,7 @@ interface CanvasState {
   pathwayWidthFt: number;
   selectedBoundarySegment: number | null;
   activeSunPreset: SunPreset | null;
+  sunQueryPoint: { canvasX: number; canvasY: number; screenX: number; screenY: number } | null;
 
   setZoom: (zoom: number) => void;
   setPan: (x: number, y: number) => void;
@@ -40,6 +41,7 @@ interface CanvasState {
   setPathwayWidthFt: (ft: number) => void;
   setSelectedBoundarySegment: (index: number | null) => void;
   setActiveSunPreset: (preset: SunPreset | null) => void;
+  setSunQueryPoint: (p: { canvasX: number; canvasY: number; screenX: number; screenY: number } | null) => void;
 }
 
 export const useCanvasStore = create<CanvasState>((set) => ({
@@ -61,6 +63,7 @@ export const useCanvasStore = create<CanvasState>((set) => ({
   pathwayWidthFt: 2,
   selectedBoundarySegment: null,
   activeSunPreset: null,
+  sunQueryPoint: null,
 
   setZoom: (zoom) => set({ zoom: Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom)) }),
   setPan: (x, y) => set({ panX: x, panY: y }),
@@ -80,4 +83,5 @@ export const useCanvasStore = create<CanvasState>((set) => ({
   setPathwayWidthFt: (ft) => set({ pathwayWidthFt: Math.max(0.5, ft) }),
   setSelectedBoundarySegment: (index) => set({ selectedBoundarySegment: index }),
   setActiveSunPreset: (preset) => set({ activeSunPreset: preset }),
+  setSunQueryPoint: (p) => set({ sunQueryPoint: p }),
 }));

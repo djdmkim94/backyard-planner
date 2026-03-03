@@ -5,6 +5,7 @@ import Sidebar from './components/sidebar/Sidebar';
 import StatusBar from './components/layout/StatusBar';
 import GardenCanvas from './components/canvas/GardenCanvas';
 import PropertiesPanel from './components/sidebar/PropertiesPanel';
+import SunQueryTooltip from './components/canvas/SunQueryTooltip';
 import { useKeyboard } from './hooks/useKeyboard';
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
         </div>
       </div>
       <StatusBar />
+      <SunQueryTooltip />
     </div>
   );
 }

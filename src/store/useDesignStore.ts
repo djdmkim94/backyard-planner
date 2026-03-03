@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { nanoid } from 'nanoid';
-import type { GardenBed, Marker, SunZone, SunWindowConfig, BoundaryPoint, Structure, BedShapeType, Design, FixedFeature, Pathway, BoundarySegmentType } from '../types/garden';
+import type { GardenBed, Marker, SunZone, SunWindowConfig, SunTimeWindow, BoundaryPoint, Structure, BedShapeType, Design, FixedFeature, Pathway, BoundarySegmentType } from '../types/garden';
 import { DEFAULT_PIXELS_PER_FOOT } from '../constants/canvas';
 import { BED_TEMPLATES } from '../constants/beds';
 import { MARKER_TEMPLATES } from '../constants/markers';
@@ -25,8 +25,9 @@ interface DesignState {
   addMarker: (type: MarkerType, x?: number, y?: number) => void;
   updateMarker: (id: string, updates: Partial<Marker>) => void;
   removeMarker: (id: string) => void;
-  addSunZone: (points: number[], summer: SunWindowConfig, winter: SunWindowConfig, label: string) => void;
+  addSunZone: (points: number[], summer: SunWindowConfig, winter: SunWindowConfig, label: string, sunWindows?: SunTimeWindow[]) => void;
   updateSunZone: (id: string, updates: Partial<Pick<SunZone, 'label' | 'summer' | 'winter'>>) => void;
+  updateSunZoneWindows: (id: string, windows: SunTimeWindow[]) => void;
   removeSunZone: (id: string) => void;
   setBoundary: (points: BoundaryPoint[]) => void;
   clearBoundary: () => void;
@@ -143,14 +144,19 @@ export const useDesignStore = create<DesignState>((set, get) => ({
       selectedId: s.selectedId === id ? null : s.selectedId,
     })),
 
-  addSunZone: (points, summer, winter, label) => {
-    const zone: SunZone = { id: nanoid(), points, summer, winter, label };
+  addSunZone: (points, summer, winter, label, sunWindows) => {
+    const zone: SunZone = { id: nanoid(), points, summer, winter, label, ...(sunWindows ? { sunWindows } : {}) };
     set((s) => ({ sunZones: [...s.sunZones, zone] }));
   },
 
   updateSunZone: (id, updates) =>
     set((s) => ({
       sunZones: s.sunZones.map((z) => (z.id === id ? { ...z, ...updates } : z)),
+    })),
+
+  updateSunZoneWindows: (id, windows) =>
+    set((s) => ({
+      sunZones: s.sunZones.map((z) => (z.id === id ? { ...z, sunWindows: windows } : z)),
     })),
 
   removeSunZone: (id) =>
@@ -228,6 +234,7 @@ export const useDesignStore = create<DesignState>((set, get) => ({
         points: [...z.points],
         summer: { ...z.summer },
         winter: { ...z.winter },
+        ...(z.sunWindows ? { sunWindows: z.sunWindows.map((w) => ({ ...w })) } : {}),
       })),
       boundary: boundary.map((p) => ({ ...p })),
       structures: structures.map((st) => ({ ...st, points: [...st.points] })),

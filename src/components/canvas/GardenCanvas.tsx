@@ -88,6 +88,7 @@ export default function GardenCanvas({ stageRef }: Props) {
   const addSunZone = useDesignStore((s) => s.addSunZone);
   const addPathway = useDesignStore((s) => s.addPathway);
   const activeSunPreset = useCanvasStore((s) => s.activeSunPreset);
+  const setSunQueryPoint = useCanvasStore((s) => s.setSunQueryPoint);
   const pathwayWidthFt = useCanvasStore((s) => s.pathwayWidthFt);
   const pushSnapshot = useHistoryStore((s) => s.pushSnapshot);
   const activeFixedFeatureType = useCanvasStore((s) => s.activeFixedFeatureType);
@@ -293,14 +294,23 @@ export default function GardenCanvas({ stageRef }: Props) {
         return;
       }
 
-      // Click on empty area to deselect
+      // Click on empty area to deselect + query sun at that point
       const clickedOnEmpty = e.target === e.target.getStage();
       if (clickedOnEmpty) {
         selectItem(null);
         setSelectedBoundarySegment(null);
+        if (activeTool === 'select') {
+          const stage = stageRef.current;
+          const canvasPos = stage?.getRelativePointerPosition();
+          if (canvasPos) {
+            setSunQueryPoint({ canvasX: canvasPos.x, canvasY: canvasPos.y, screenX: e.evt.clientX, screenY: e.evt.clientY });
+          }
+        } else {
+          setSunQueryPoint(null);
+        }
       }
     },
-    [activeTool, activeFixedFeatureType, setIsPanning, selectItem, setSelectedBoundarySegment, stageRef, boundary, setBoundary, addFixedFeature, addPathway, pushSnapshot]
+    [activeTool, activeFixedFeatureType, setIsPanning, selectItem, setSelectedBoundarySegment, setSunQueryPoint, stageRef, boundary, setBoundary, addFixedFeature, addPathway, pushSnapshot]
   );
 
   const handleMouseMove = useCallback(
@@ -441,10 +451,10 @@ export default function GardenCanvas({ stageRef }: Props) {
                 ? MANUAL_PRESETS.find((p) => p.id === activeSunPreset)
                 : null;
               if (preset) {
-                // Manual mode: auto-confirm with preset config, keep tool active
+                // Manual mode: auto-confirm with preset config + time windows, keep tool active
                 pushSnapshot();
                 const n = useDesignStore.getState().sunZones.length + 1;
-                addSunZone(points, preset.summer, preset.winter, `${preset.label} Zone ${n}`);
+                addSunZone(points, preset.summer, preset.winter, `${preset.label} Zone ${n}`, preset.sunWindows);
               } else {
                 // Auto mode: show confirmation panel
                 setPendingZoneGeometry(points);

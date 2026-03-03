@@ -15,8 +15,10 @@ import {
   exposureLabel,
   computeSunConfig,
   geocodeAddress,
+  effectiveSunWindows,
+  formatHour,
 } from '../../utils/sun';
-import type { SunWindowConfig } from '../../types/garden';
+import type { SunWindowConfig, SunTimeWindow } from '../../types/garden';
 import type { SunPreset } from '../../types/canvas';
 
 type WindowKey = keyof SunWindowConfig;
@@ -65,18 +67,47 @@ function WindowBadges({ config }: { config: SunWindowConfig }) {
   );
 }
 
+function TimeWindowCheckboxes({
+  windows,
+  onChange,
+}: {
+  windows: SunTimeWindow[];
+  onChange: (updated: SunTimeWindow[]) => void;
+}) {
+  return (
+    <div className="space-y-1">
+      <div className="text-xs font-medium text-white/40">Sun Windows</div>
+      {windows.map((w) => (
+        <label key={w.id} className="flex items-center gap-2 text-xs cursor-pointer">
+          <input
+            type="checkbox"
+            checked={w.active}
+            onChange={(e) =>
+              onChange(windows.map((x) => (x.id === w.id ? { ...x, active: e.target.checked } : x)))
+            }
+            className="rounded"
+          />
+          <span className="font-medium text-white/80">{w.label}</span>
+          <span className="text-white/35">
+            {formatHour(w.startHour)}–{formatHour(w.endHour)} · {w.endHour - w.startHour}h
+          </span>
+        </label>
+      ))}
+    </div>
+  );
+}
+
 export default function SunPanel() {
   const sunZones = useDesignStore((s) => s.sunZones);
   const removeSunZone = useDesignStore((s) => s.removeSunZone);
   const updateSunZone = useDesignStore((s) => s.updateSunZone);
+  const updateSunZoneWindows = useDesignStore((s) => s.updateSunZoneWindows);
   const addSunZone = useDesignStore((s) => s.addSunZone);
   const boundary = useDesignStore((s) => s.boundary);
   const showSunOverlay = useCanvasStore((s) => s.showSunOverlay);
   const toggleSunOverlay = useCanvasStore((s) => s.toggleSunOverlay);
   const activeTool = useCanvasStore((s) => s.activeTool);
   const setActiveTool = useCanvasStore((s) => s.setActiveTool);
-  const activeSeason = useCanvasStore((s) => s.activeSeason);
-  const setActiveSeason = useCanvasStore((s) => s.setActiveSeason);
   const pendingZoneGeometry = useCanvasStore((s) => s.pendingZoneGeometry);
   const setPendingZoneGeometry = useCanvasStore((s) => s.setPendingZoneGeometry);
   const activeSunPreset = useCanvasStore((s) => s.activeSunPreset);
@@ -200,22 +231,10 @@ export default function SunPanel() {
         <div className="space-y-3">
 
           {/* Global controls */}
-          <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 text-sm text-white/70 cursor-pointer">
-              <input type="checkbox" checked={showSunOverlay} onChange={toggleSunOverlay} className="rounded" />
-              Show overlay
-            </label>
-            <div className="flex rounded overflow-hidden border border-white/10 text-xs">
-              <button
-                className={`px-2 py-1 transition-colors ${activeSeason === 'summer' ? 'bg-amber-500 text-white' : 'text-white/50 hover:bg-white/5'}`}
-                onClick={() => setActiveSeason('summer')}
-              >Summer</button>
-              <button
-                className={`px-2 py-1 transition-colors ${activeSeason === 'winter' ? 'bg-blue-500 text-white' : 'text-white/50 hover:bg-white/5'}`}
-                onClick={() => setActiveSeason('winter')}
-              >Winter</button>
-            </div>
-          </div>
+          <label className="flex items-center gap-2 text-sm text-white/70 cursor-pointer">
+            <input type="checkbox" checked={showSunOverlay} onChange={toggleSunOverlay} className="rounded" />
+            Show overlay
+          </label>
 
           {/* Mode tabs */}
           <div className="flex rounded overflow-hidden border border-white/10 text-xs">
@@ -384,7 +403,8 @@ export default function SunPanel() {
                 Zones <span className="font-normal normal-case">({sunZones.length})</span>
               </div>
               {sunZones.map((zone) => {
-                const style = sunZoneStyle(zone[activeSeason]);
+                const zoneWindows = effectiveSunWindows(zone);
+                const style = sunZoneStyle(zoneWindows);
                 const isExpanded = expandedZoneId === zone.id;
                 return (
                   <div key={zone.id} className="border border-white/10 rounded overflow-hidden">
@@ -413,12 +433,10 @@ export default function SunPanel() {
                           className="w-full text-xs bg-[#1c1c1e] border border-white/10 rounded px-2 py-1 text-white"
                           placeholder="Zone label"
                         />
-                        <WindowCheckboxes label="Summer" config={zone.summer} onChange={(key, val) => updateSunZone(zone.id, { summer: { ...zone.summer, [key]: val } })} />
-                        <WindowCheckboxes label="Winter" config={zone.winter} onChange={(key, val) => updateSunZone(zone.id, { winter: { ...zone.winter, [key]: val } })} />
-                        <button
-                          className="text-xs text-amber-400/70 hover:text-amber-400 transition-colors"
-                          onClick={() => updateSunZone(zone.id, { winter: smartWinterDefault(zone.summer) })}
-                        >Apply smart winter defaults</button>
+                        <TimeWindowCheckboxes
+                          windows={effectiveSunWindows(zone)}
+                          onChange={(updated) => { pushSnapshot(); updateSunZoneWindows(zone.id, updated); }}
+                        />
                       </div>
                     )}
                   </div>
