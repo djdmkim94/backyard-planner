@@ -1,73 +1,119 @@
-# React + TypeScript + Vite
+# Backyard Planner
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A visual garden design tool built with React and Konva.js. Plan your garden layout with drag-and-drop beds, sun exposure analysis, fixed features, and climate-based planting recommendations — all in the browser, no account required.
 
-Currently, two official plugins are available:
+**Live demo**: https://backyard-planner-production.up.railway.app/
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Garden Beds
+- Drag and drop bed templates onto the canvas: rectangle, circle, oval, raised box, keyhole, and stadium (pill) shapes
+- Resize and rotate beds freely
+- Label beds and set sun requirements (full sun, part shade, full shade)
+- Color-coded by sun requirement
 
-## Expanding the ESLint configuration
+### Fixed Features
+- Place fixed site features: house walls, fences, trees, water spigots, concrete pads, and downspouts
+- Polygon features (walls, fences, concrete pads) drawn by clicking points, double-click to finish
+- Point features (trees, spigots, downspouts) placed with a single click
+- Concrete pads support greyscale surface color swatches (concrete, asphalt, gravel, pavers)
+- Fence segments render with a double-rail visual; house walls render thicker with shadow
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Sun Exposure Analysis
+- Draw your garden boundary, enter your address, and click **Compute ☀️** to calculate real sun exposure
+- Uses `suncalc` to sample sun altitude every 30 minutes on June 21 and December 21
+- Overlays color-coded sun zones: full sun (yellow), partial shade (orange), full shade (blue)
+- Manual shade zone drawing also available as an alternative
+- Sun zone labels show exposure classification
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Climate & Recommendations Panel
+- Collapsible bottom drawer with 4 climate inputs: current date, USDA hardiness zone, Köppen climate code, and prevailing wind direction
+- Compass rose UI for selecting wind direction
+- Live rule-based recommendations that update as you fill in data:
+  - Sun mismatch warnings (full-sun bed in shaded area)
+  - Wind protection suggestions based on prevailing direction
+  - Seasonal planting suggestions based on hardiness zone and date
+  - Climate-specific tips (arid, tropical, continental)
+  - Spacing and access reminders
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Canvas Tools
+- Pan (middle mouse / space + drag) and zoom (scroll wheel)
+- Grid with optional snapping
+- Unit toggle: feet or meters
+- Measurement display on beds and boundaries
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Design Management
+- Undo / redo (Ctrl+Z / Ctrl+Shift+Z)
+- Save design to browser localStorage and reload on next visit
+- Export canvas as PNG
+- Clear all to start fresh
+
+### Onboarding Tour
+- First-visit step-by-step tour highlighting toolbar, bed panel, canvas, sun panel, and climate panel
+- Restart anytime via the `?` button in the toolbar
+
+---
+
+## Tech Stack
+
+| Layer | Library |
+|-------|---------|
+| UI framework | React 19 |
+| Canvas rendering | react-konva + Konva.js |
+| Styling | Tailwind CSS v4 |
+| State management | Zustand |
+| Sun calculations | suncalc |
+| Geocoding | Nominatim (OpenStreetMap) |
+| Build tool | Vite 7 |
+| Language | TypeScript |
+
+---
+
+## Running Locally
+
+```bash
+git clone https://github.com/djdmkim94/backyard-planner.git
+cd backyard-planner
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Open http://localhost:5173
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Build for production
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build
+npx serve dist -s
 ```
+
+---
+
+## Deployment
+
+The app is deployed on Railway. The `railway.json` config handles build and start automatically. Any push to `main` triggers a new deployment.
+
+---
+
+## Project Structure
+
+```
+src/
+├── components/
+│   ├── canvas/       # Konva layers (beds, boundary, sun overlay, features, warnings)
+│   ├── layout/       # Toolbar, StatusBar, ClimatePanel, TourOverlay
+│   └── sidebar/      # Bed panel, sun panel, properties panel, fixed features
+├── constants/        # Canvas defaults, sun data, fixed feature configs
+├── hooks/            # Keyboard shortcuts
+├── store/            # Zustand stores (design, canvas, history)
+├── types/            # TypeScript interfaces
+└── utils/            # Sun calculations, recommendations engine, geometry helpers
+```
+
+---
+
+## License
+
+MIT
