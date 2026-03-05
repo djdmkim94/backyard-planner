@@ -145,7 +145,7 @@ function PolygonFeature({ feature }: { feature: FixedFeature }) {
       <Line
         points={feature.points}
         closed={isConcrete}
-        fill={isConcrete ? 'rgba(148,163,184,0.01)' : undefined}
+        fill={isConcrete ? 'rgba(0,0,0,0.01)' : undefined}
         stroke="transparent"
         strokeWidth={14}
       />
@@ -153,8 +153,8 @@ function PolygonFeature({ feature }: { feature: FixedFeature }) {
       <Line
         points={feature.points}
         closed={isConcrete}
-        fill={isConcrete ? '#94a3b8' : undefined}
-        opacity={isConcrete ? 0.3 : 1}
+        fill={isConcrete ? (feature.color ?? '#9ca3af') : undefined}
+        opacity={isConcrete ? 0.35 : 1}
         stroke={cfg.color}
         strokeWidth={isHouseWall ? 2.5 : isFence ? 1.5 : 2}
         dash={isFence ? [5, 3] : undefined}

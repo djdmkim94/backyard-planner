@@ -6,9 +6,10 @@ import Konva from 'konva';
 
 interface Props {
   stageRef: React.RefObject<Konva.Stage | null>;
+  onStartTour: () => void;
 }
 
-export default function Toolbar({ stageRef }: Props) {
+export default function Toolbar({ stageRef, onStartTour }: Props) {
   const activeTool = useCanvasStore((s) => s.activeTool);
   const setActiveTool = useCanvasStore((s) => s.setActiveTool);
   const zoom = useCanvasStore((s) => s.zoom);
@@ -25,8 +26,6 @@ export default function Toolbar({ stageRef }: Props) {
   const setDesignName = useDesignStore((s) => s.setDesignName);
   const boundary = useDesignStore((s) => s.boundary);
   const clearBoundary = useDesignStore((s) => s.clearBoundary);
-  const pathwayWidthFt = useCanvasStore((s) => s.pathwayWidthFt);
-  const setPathwayWidthFt = useCanvasStore((s) => s.setPathwayWidthFt);
   const pushSnapshot = useHistoryStore((s) => s.pushSnapshot);
 
   const toolBtn = (tool: typeof activeTool, label: string, title?: string) => (
@@ -44,7 +43,7 @@ export default function Toolbar({ stageRef }: Props) {
   );
 
   return (
-    <div className="h-12 bg-[#1c1c1e] border-b border-white/10 text-white flex items-center px-4 gap-2 shrink-0">
+    <div data-tour="toolbar" className="h-12 bg-[#1c1c1e] border-b border-white/10 text-white flex items-center px-4 gap-2 shrink-0">
       <input
         className="bg-transparent text-white font-semibold text-sm border-b border-transparent hover:border-white/20 focus:border-amber-400/60 focus:outline-none px-1 w-40 transition-colors"
         value={designName}
@@ -71,27 +70,12 @@ export default function Toolbar({ stageRef }: Props) {
         </button>
       )}
       {toolBtn('structure', 'Shapes', 'Draw Fixed Structure')}
-      {toolBtn('pathway', 'Pathway', 'Draw Pathway (P)')}
-      {activeTool === 'pathway' && (
-        <div className="flex items-center gap-1 text-xs text-white/60">
-          <span className="text-white/30">W:</span>
-          <input
-            type="number"
-            min={0.5}
-            max={20}
-            step={0.5}
-            value={pathwayWidthFt}
-            onChange={(e) => setPathwayWidthFt(+e.target.value)}
-            className="w-10 px-1 py-0.5 bg-[#2c2c2e] border border-white/15 rounded text-white text-center"
-          />
-          <span className="text-white/30">ft</span>
-        </div>
-      )}
       {toolBtn('sun_zone', 'Sun Zone', 'Draw Sun Zone')}
 
       <div className="w-px h-5 bg-white/10 mx-1" />
 
       <button className="px-2 py-1 rounded text-xs text-white/60 hover:bg-white/8 hover:text-white/90 transition-colors" onClick={undo} title="Undo (Ctrl+Z)">Undo</button>
+
       <button className="px-2 py-1 rounded text-xs text-white/60 hover:bg-white/8 hover:text-white/90 transition-colors" onClick={redo} title="Redo (Ctrl+Y)">Redo</button>
 
       <div className="w-px h-5 bg-white/10 mx-1" />
@@ -116,6 +100,14 @@ export default function Toolbar({ stageRef }: Props) {
         <span className="w-12 text-center text-white/50">{Math.round(zoom * 100)}%</span>
         <button className="px-1.5 py-0.5 hover:bg-white/8 rounded transition-colors" onClick={() => setZoom(zoom * 1.2)}>+</button>
       </div>
+
+      <button
+        className="px-2 py-1 rounded text-xs text-white/40 hover:bg-white/8 hover:text-white/70 border border-white/10 transition-colors"
+        onClick={onStartTour}
+        title="Open guided tour"
+      >
+        ?
+      </button>
 
       <button
         className="px-2 py-1 rounded text-xs bg-green-700 hover:bg-green-600 text-white transition-colors"

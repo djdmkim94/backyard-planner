@@ -1,11 +1,18 @@
 import { create } from 'zustand';
 import { nanoid } from 'nanoid';
-import type { GardenBed, Marker, SunZone, SunWindowConfig, SunTimeWindow, BoundaryPoint, Structure, BedShapeType, Design, FixedFeature, Pathway, BoundarySegmentType } from '../types/garden';
+import type { GardenBed, Marker, SunZone, SunWindowConfig, SunTimeWindow, BoundaryPoint, Structure, BedShapeType, Design, FixedFeature, Pathway, BoundarySegmentType, ClimateData } from '../types/garden';
 import { DEFAULT_PIXELS_PER_FOOT } from '../constants/canvas';
 import { BED_TEMPLATES } from '../constants/beds';
 import { MARKER_TEMPLATES } from '../constants/markers';
 import type { MarkerType } from '../types/garden';
 import { legacyExposureToWindows, smartWinterDefault } from '../utils/sun';
+
+const DEFAULT_CLIMATE_DATA: ClimateData = {
+  currentDate: '',
+  hardinessZone: '',
+  koppenClimate: '',
+  windDirection: null,
+};
 
 interface DesignState {
   beds: GardenBed[];
@@ -14,6 +21,7 @@ interface DesignState {
   boundary: BoundaryPoint[];
   structures: Structure[];
   fixedFeatures: FixedFeature[];
+  climateData: ClimateData;
   selectedId: string | null;
   designName: string;
 
@@ -42,6 +50,7 @@ interface DesignState {
   addPathway: (pathway: Omit<Pathway, 'id'>) => void;
   updatePathway: (id: string, updates: Partial<Pathway>) => void;
   removePathway: (id: string) => void;
+  updateClimateData: (updates: Partial<ClimateData>) => void;
   setDesignName: (name: string) => void;
   getSnapshot: () => DesignSnapshot;
   restoreSnapshot: (snapshot: DesignSnapshot) => void;
@@ -57,6 +66,7 @@ export interface DesignSnapshot {
   structures: Structure[];
   fixedFeatures: FixedFeature[];
   pathways: Pathway[];
+  climateData: ClimateData;
 }
 
 export const useDesignStore = create<DesignState>((set, get) => ({
@@ -67,6 +77,7 @@ export const useDesignStore = create<DesignState>((set, get) => ({
   structures: [],
   fixedFeatures: [],
   pathways: [],
+  climateData: { ...DEFAULT_CLIMATE_DATA },
   selectedId: null,
   designName: 'My Garden',
 
@@ -222,10 +233,13 @@ export const useDesignStore = create<DesignState>((set, get) => ({
   removePathway: (id) =>
     set((s) => ({ pathways: s.pathways.filter((p) => p.id !== id) })),
 
+  updateClimateData: (updates) =>
+    set((s) => ({ climateData: { ...s.climateData, ...updates } })),
+
   setDesignName: (name) => set({ designName: name }),
 
   getSnapshot: () => {
-    const { beds, markers, sunZones, boundary, structures, fixedFeatures, pathways } = get();
+    const { beds, markers, sunZones, boundary, structures, fixedFeatures, pathways, climateData } = get();
     return {
       beds: beds.map((b) => ({ ...b })),
       markers: markers.map((m) => ({ ...m })),
@@ -240,6 +254,7 @@ export const useDesignStore = create<DesignState>((set, get) => ({
       structures: structures.map((st) => ({ ...st, points: [...st.points] })),
       fixedFeatures: fixedFeatures.map((f) => ({ ...f, points: [...f.points] })),
       pathways: pathways.map((p) => ({ ...p, points: [...p.points] })),
+      climateData: { ...climateData },
     };
   },
 
@@ -252,6 +267,7 @@ export const useDesignStore = create<DesignState>((set, get) => ({
       structures: snapshot.structures,
       fixedFeatures: snapshot.fixedFeatures,
       pathways: snapshot.pathways,
+      climateData: snapshot.climateData,
     }),
 
   loadDesign: (design) => {
@@ -275,6 +291,7 @@ export const useDesignStore = create<DesignState>((set, get) => ({
       structures: design.structures ?? [],
       fixedFeatures: design.fixedFeatures ?? [],
       pathways: design.pathways ?? [],
+      climateData: design.climateData ?? { ...DEFAULT_CLIMATE_DATA },
       designName: design.name,
       selectedId: null,
     });
@@ -289,6 +306,7 @@ export const useDesignStore = create<DesignState>((set, get) => ({
       structures: [],
       fixedFeatures: [],
       pathways: [],
+      climateData: { ...DEFAULT_CLIMATE_DATA },
       selectedId: null,
     }),
 }));

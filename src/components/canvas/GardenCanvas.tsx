@@ -18,8 +18,6 @@ import StructureLayer from './StructureLayer';
 import StructurePreviewLayer from './StructurePreviewLayer';
 import FixedFeatureLayer from './FixedFeatureLayer';
 import MeasurementLayer from './MeasurementLayer';
-import PathwayGuides from './PathwayGuides';
-import PathwayLayer from './PathwayLayer';
 import PlacementWarningsLayer from './PlacementWarningsLayer';
 import SelectionTransformer from './SelectionTransformer';
 import { getFixedFeatureConfig } from '../../constants/fixedFeatures';
@@ -64,11 +62,6 @@ export default function GardenCanvas({ stageRef }: Props) {
   const [fixedFeaturePreview, setFixedFeaturePreview] = useState<{ x: number; y: number } | null>(null);
   const fixedFeaturePointsRef = useRef<Array<{ x: number; y: number }>>([]);
 
-  // Pathway drawing state
-  const [pathwayInProgress, setPathwayInProgress] = useState<Array<{ x: number; y: number }>>([]);
-  const [pathwayPreview, setPathwayPreview] = useState<{ x: number; y: number } | null>(null);
-  const pathwayPointsRef = useRef<Array<{ x: number; y: number }>>([]);
-
   const zoom = useCanvasStore((s) => s.zoom);
   const panX = useCanvasStore((s) => s.panX);
   const panY = useCanvasStore((s) => s.panY);
@@ -86,10 +79,8 @@ export default function GardenCanvas({ stageRef }: Props) {
   const addStructure = useDesignStore((s) => s.addStructure);
   const addFixedFeature = useDesignStore((s) => s.addFixedFeature);
   const addSunZone = useDesignStore((s) => s.addSunZone);
-  const addPathway = useDesignStore((s) => s.addPathway);
   const activeSunPreset = useCanvasStore((s) => s.activeSunPreset);
   const setSunQueryPoint = useCanvasStore((s) => s.setSunQueryPoint);
-  const pathwayWidthFt = useCanvasStore((s) => s.pathwayWidthFt);
   const pushSnapshot = useHistoryStore((s) => s.pushSnapshot);
   const activeFixedFeatureType = useCanvasStore((s) => s.activeFixedFeatureType);
   const concreteDrawMode = useCanvasStore((s) => s.concreteDrawMode);
@@ -153,11 +144,6 @@ export default function GardenCanvas({ stageRef }: Props) {
       concreteDragStartRef.current = null;
       setConcreteDragStart(null);
       setConcreteDragCurrent(null);
-    }
-    if (activeTool !== 'pathway') {
-      pathwayPointsRef.current = [];
-      setPathwayInProgress([]);
-      setPathwayPreview(null);
     }
   }, [activeTool]);
 
@@ -280,20 +266,6 @@ export default function GardenCanvas({ stageRef }: Props) {
         return;
       }
 
-      // Pathway drawing
-      if (activeTool === 'pathway') {
-        const stage = stageRef.current;
-        if (!stage) return;
-        const pos = stage.getRelativePointerPosition();
-        if (!pos) return;
-        const prev = pathwayPointsRef.current;
-        const point = e.evt.shiftKey && prev.length > 0 ? snapToAngle(prev[prev.length - 1], pos) : pos;
-        const next = [...prev, point];
-        pathwayPointsRef.current = next;
-        setPathwayInProgress(next);
-        return;
-      }
-
       // Click on empty area to deselect + query sun at that point
       const clickedOnEmpty = e.target === e.target.getStage();
       if (clickedOnEmpty) {
@@ -310,7 +282,7 @@ export default function GardenCanvas({ stageRef }: Props) {
         }
       }
     },
-    [activeTool, activeFixedFeatureType, setIsPanning, selectItem, setSelectedBoundarySegment, setSunQueryPoint, stageRef, boundary, setBoundary, addFixedFeature, addPathway, pushSnapshot]
+    [activeTool, activeFixedFeatureType, setIsPanning, selectItem, setSelectedBoundarySegment, setSunQueryPoint, stageRef, boundary, setBoundary, addFixedFeature, pushSnapshot]
   );
 
   const handleMouseMove = useCallback(
@@ -358,11 +330,6 @@ export default function GardenCanvas({ stageRef }: Props) {
         }
       }
 
-      if (activeTool === 'pathway') {
-        const prev = pathwayPointsRef.current;
-        const snapped = e.evt.shiftKey && prev.length > 0 ? snapToAngle(prev[prev.length - 1], pos) : pos;
-        setPathwayPreview(snapped);
-      }
     },
     [isPanning, panX, panY, setPan, activeTool, activeFixedFeatureType, concreteDrawMode, boundary, stageRef]
   );
@@ -412,25 +379,8 @@ export default function GardenCanvas({ stageRef }: Props) {
         }
       }
 
-      if (activeTool === 'pathway') {
-        const pts = pathwayPointsRef.current.slice(0, -1);
-        pathwayPointsRef.current = [];
-        setPathwayInProgress([]);
-        setPathwayPreview(null);
-        if (pts.length >= 2) {
-          pushSnapshot();
-          const count = useDesignStore.getState().pathways.length + 1;
-          addPathway({
-            points: pts.flatMap((p) => [p.x, p.y]),
-            widthFt: useCanvasStore.getState().pathwayWidthFt,
-            label: `Pathway ${count}`,
-            color: '#d4a574',
-          });
-        }
-        setActiveTool('select');
-      }
     },
-    [activeTool, activeFixedFeatureType, setBoundary, setActiveTool, addStructure, addFixedFeature, addPathway, pushSnapshot]
+    [activeTool, activeFixedFeatureType, setBoundary, setActiveTool, addStructure, addFixedFeature, pushSnapshot]
   );
 
   const handleMouseUp = useCallback(
@@ -537,11 +487,6 @@ export default function GardenCanvas({ stageRef }: Props) {
           </div>
         );
       })()}
-      {activeTool === 'pathway' && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-gray-800/80 text-white text-xs px-3 py-1.5 rounded-full pointer-events-none z-10 whitespace-nowrap">
-          Click to place points · Hold <span className="bg-gray-600 px-1.5 py-0.5 rounded mx-0.5 font-mono">⇧ Shift</span> to snap to 45° · Double-click to finish
-        </div>
-      )}
       <Stage
         ref={stageRef}
         width={size.width}
@@ -560,11 +505,6 @@ export default function GardenCanvas({ stageRef }: Props) {
         {/* Background layer — non-interactive */}
         <Layer listening={false}>
           <GridLayer width={canvasW} height={canvasH} />
-          <PathwayLayer
-            inProgressPoints={pathwayInProgress}
-            previewPoint={pathwayPreview}
-            previewWidthFt={pathwayWidthFt}
-          />
           <SunOverlayLayer dragStart={sunZoneDragStart} dragCurrent={sunZoneDragCurrent} />
           <StructurePreviewLayer points={structureInProgress} previewPoint={structurePreview} />
           <StructurePreviewLayer points={fixedFeatureInProgress} previewPoint={fixedFeaturePreview} />
@@ -592,7 +532,6 @@ export default function GardenCanvas({ stageRef }: Props) {
         {/* Overlay layer — non-interactive */}
         <Layer listening={false}>
           <MeasurementLayer />
-          <PathwayGuides />
           <PlacementWarningsLayer />
         </Layer>
       </Stage>

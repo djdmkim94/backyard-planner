@@ -55,9 +55,6 @@ export default function PropertiesPanel() {
   const markers = useDesignStore((s) => s.markers);
   const updateMarker = useDesignStore((s) => s.updateMarker);
   const removeMarker = useDesignStore((s) => s.removeMarker);
-  const pathways = useDesignStore((s) => s.pathways);
-  const updatePathway = useDesignStore((s) => s.updatePathway);
-  const removePathway = useDesignStore((s) => s.removePathway);
 
   const selectedBed = beds.find((b) => b.id === selectedId);
   const selectedStructure = structures.find((st) => st.id === selectedId);
@@ -65,7 +62,6 @@ export default function PropertiesPanel() {
 
   const [expandedFfId, setExpandedFfId] = useState<string | null>(null);
   const [expandedStId, setExpandedStId] = useState<string | null>(null);
-  const [expandedPwId, setExpandedPwId] = useState<string | null>(null);
 
   return (
     <div className="space-y-4">
@@ -277,6 +273,29 @@ export default function PropertiesPanel() {
                             onChange={(e) => updateFixedFeature(f.id, { label: e.target.value || undefined })}
                             className="w-full text-xs bg-[#1c1c1e] border border-white/10 rounded px-2 py-1 text-white placeholder:text-white/20" />
                         </div>
+                        {f.type === 'concrete_pad' && (
+                          <div>
+                            <label className={labelCls}>Surface</label>
+                            <div className="flex gap-1.5 flex-wrap mt-1">
+                              {[
+                                { color: '#e5e7eb', label: 'Light concrete' },
+                                { color: '#9ca3af', label: 'Concrete' },
+                                { color: '#6b7280', label: 'Dark concrete' },
+                                { color: '#374151', label: 'Asphalt' },
+                                { color: '#d1c4a7', label: 'Gravel' },
+                                { color: '#78716c', label: 'Pavers' },
+                              ].map(({ color, label }) => (
+                                <button
+                                  key={color}
+                                  title={label}
+                                  onClick={() => updateFixedFeature(f.id, { color })}
+                                  className={`w-5 h-5 rounded border-2 transition-all ${(f.color ?? '#9ca3af') === color ? 'border-amber-400 scale-110' : 'border-white/10 hover:border-white/30'}`}
+                                  style={{ backgroundColor: color }}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
                         {(f.type === 'house_wall' || f.type === 'fence') && (
                           <div>
                             <label className={labelCls}>Height (ft)</label>
@@ -349,59 +368,6 @@ export default function PropertiesPanel() {
         </>
       )}
 
-      {/* ── Pathways list ── */}
-      {pathways.length > 0 && (
-        <>
-          <hr className="border-white/10" />
-          <div>
-            <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-2">
-              Pathways <span className="text-white/25 font-normal normal-case tracking-normal">({pathways.length})</span>
-            </h3>
-            <div className="space-y-1">
-              {pathways.map((pw) => {
-                const isExpanded = expandedPwId === pw.id;
-                return (
-                  <div key={pw.id} className="border border-white/10 rounded overflow-hidden">
-                    <div
-                      className="flex items-center justify-between px-2 py-1.5 cursor-pointer hover:bg-[#2c2c2e] text-xs transition-colors"
-                      onClick={() => setExpandedPwId(isExpanded ? null : pw.id)}
-                    >
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: pw.color }} />
-                        <span className="truncate text-white/70">{pw.label}</span>
-                        <span className="text-white/30 shrink-0">{pw.widthFt}ft</span>
-                      </div>
-                      <button className="text-red-400/50 hover:text-red-400 px-1 transition-colors"
-                        onClick={(e) => { e.stopPropagation(); pushSnapshot(); removePathway(pw.id); if (expandedPwId === pw.id) setExpandedPwId(null); }}>×</button>
-                    </div>
-                    {isExpanded && (
-                      <div className="px-2 pb-2 space-y-1.5 border-t border-white/10 pt-2 bg-[#2c2c2e]">
-                        <div>
-                          <label className={labelCls}>Label</label>
-                          <input className="w-full text-xs bg-[#1c1c1e] border border-white/10 rounded px-2 py-1 text-white"
-                            value={pw.label} onChange={(e) => updatePathway(pw.id, { label: e.target.value })} />
-                        </div>
-                        <div>
-                          <label className={labelCls}>Width (ft)</label>
-                          <input type="number" min={0.5} max={20} step={0.5}
-                            className="w-full text-xs bg-[#1c1c1e] border border-white/10 rounded px-2 py-1 text-white"
-                            value={pw.widthFt}
-                            onChange={(e) => { pushSnapshot(); updatePathway(pw.id, { widthFt: +e.target.value }); }} />
-                        </div>
-                        <div>
-                          <label className={labelCls}>Color</label>
-                          <input type="color" className="w-full h-7 cursor-pointer rounded"
-                            value={pw.color} onChange={(e) => updatePathway(pw.id, { color: e.target.value })} />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </>
-      )}
 
     </div>
   );

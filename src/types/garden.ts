@@ -90,6 +90,7 @@ export interface FixedFeature {
   height?: number;         // feet — for fences/walls
   canopyRadius?: number;   // feet — for trees
   label?: string;
+  color?: string;          // custom fill color (concrete_pad / pathway surfaces)
 }
 
 export interface Pathway {
@@ -98,6 +99,15 @@ export interface Pathway {
   widthFt: number;
   label: string;
   color: string;
+}
+
+export type WindDirection = 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW';
+
+export interface ClimateData {
+  currentDate: string;      // ISO: "2024-03-15"
+  hardinessZone: string;    // e.g. "7b", "5a"
+  koppenClimate: string;    // e.g. "Cfa", "BSk"
+  windDirection: WindDirection | null;
 }
 
 export interface Design {
@@ -110,6 +120,7 @@ export interface Design {
   structures: Structure[];
   fixedFeatures: FixedFeature[];
   pathways: Pathway[];
+  climateData?: ClimateData;
   createdAt: number;
   updatedAt: number;
 }

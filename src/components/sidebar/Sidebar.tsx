@@ -9,9 +9,13 @@ export default function Sidebar() {
       <div className="p-3 space-y-4">
         <FixedFeaturePanel />
         <hr className="border-white/10" />
-        <BedPanel />
+        <div data-tour="sidebar-beds">
+          <BedPanel />
+        </div>
         <hr className="border-white/10" />
-        <SunPanel />
+        <div data-tour="sidebar-sun">
+          <SunPanel />
+        </div>
         <hr className="border-white/10" />
         <DesignPanel />
       </div>

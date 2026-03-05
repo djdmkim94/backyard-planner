@@ -77,12 +77,20 @@ function SegmentLabel({ ax, ay, bx, by, active, unit }: SegLabelProps) {
 function getSegmentStyle(type?: BoundarySegmentType) {
   switch (type) {
     case 'house_wall':
-      return { stroke: '#78716c', strokeWidth: 4, dash: undefined as number[] | undefined };
+      return { stroke: '#6b7280', strokeWidth: 6, dash: undefined as number[] | undefined };
     case 'fence':
-      return { stroke: '#92400e', strokeWidth: 2, dash: [5, 3] as number[] | undefined };
+      return { stroke: '#92400e', strokeWidth: 3, dash: [6, 4] as number[] | undefined };
     default:
-      return { stroke: '#44362A', strokeWidth: 2, dash: [8, 4] as number[] | undefined };
+      return { stroke: '#44362A', strokeWidth: 2, dash: [10, 5] as number[] | undefined };
   }
+}
+
+function perpOffset(ax: number, ay: number, bx: number, by: number, d: number): [number, number, number, number] {
+  const dx = bx - ax, dy = by - ay;
+  const len = Math.sqrt(dx * dx + dy * dy);
+  if (len === 0) return [ax, ay, bx, by];
+  const nx = (-dy / len) * d, ny = (dx / len) * d;
+  return [ax + nx, ay + ny, bx + nx, by + ny];
 }
 
 export default function BoundaryLayer({ previewPoint }: Props) {
@@ -178,7 +186,24 @@ export default function BoundaryLayer({ previewPoint }: Props) {
               dash={style.dash}
               lineCap="round"
               listening={false}
+              shadowBlur={p.segmentType === 'house_wall' ? 3 : undefined}
+              shadowColor={p.segmentType === 'house_wall' ? 'rgba(0,0,0,0.4)' : undefined}
             />
+            {/* Fence double-rail */}
+            {p.segmentType === 'fence' && (() => {
+              const [ox1, oy1, ox2, oy2] = perpOffset(p.x, p.y, next.x, next.y, 4);
+              return (
+                <Line
+                  points={[ox1, oy1, ox2, oy2]}
+                  stroke="#92400e"
+                  strokeWidth={1}
+                  dash={[6, 4]}
+                  opacity={0.45}
+                  lineCap="round"
+                  listening={false}
+                />
+              );
+            })()}
             {/* Fat transparent hit target */}
             <Line
               points={[p.x, p.y, next.x, next.y]}

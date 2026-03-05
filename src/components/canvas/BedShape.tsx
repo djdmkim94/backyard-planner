@@ -1,4 +1,4 @@
-import { Rect, Ellipse, Text, Group } from 'react-konva';
+import { Rect, Ellipse, Text, Group, Shape } from 'react-konva';
 import type { GardenBed } from '../../types/garden';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useCanvasStore } from '../../store/useCanvasStore';
@@ -54,6 +54,35 @@ export default function BedShape({ bed }: Props) {
       stroke={stroke}
       strokeWidth={strokeWidth}
     />
+  ) : shape === 'stadium' ? (
+    <Shape
+      sceneFunc={(ctx, s) => {
+        const w = bed.width, h = bed.height;
+        const nctx = ctx as unknown as CanvasRenderingContext2D;
+        nctx.beginPath();
+        if (w >= h) {
+          // horizontal: semicircles on left/right
+          const r = h / 2;
+          nctx.moveTo(r, 0);
+          nctx.lineTo(w - r, 0);
+          nctx.arc(w - r, r, r, -Math.PI / 2, Math.PI / 2);
+          nctx.lineTo(r, h);
+          nctx.arc(r, r, r, Math.PI / 2, -Math.PI / 2);
+        } else {
+          // vertical: semicircles on top/bottom
+          const r = w / 2;
+          nctx.arc(r, r, r, 0, Math.PI, true);
+          nctx.lineTo(0, h - r);
+          nctx.arc(r, h - r, r, Math.PI, 0);
+        }
+        nctx.closePath();
+        ctx.fillStrokeShape(s);
+      }}
+      fill={bed.color}
+      opacity={0.8}
+      stroke={stroke}
+      strokeWidth={strokeWidth}
+    />
   ) : (
     <Rect
       width={bed.width}
@@ -62,7 +91,7 @@ export default function BedShape({ bed }: Props) {
       opacity={0.8}
       stroke={stroke}
       strokeWidth={strokeWidth}
-      cornerRadius={shape === 'stadium' ? Math.min(bed.width, bed.height) / 2 : 2}
+      cornerRadius={2}
     />
   );
 
