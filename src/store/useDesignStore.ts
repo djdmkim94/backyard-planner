@@ -79,7 +79,7 @@ export const useDesignStore = create<DesignState>((set, get) => ({
   pathways: [],
   climateData: { ...DEFAULT_CLIMATE_DATA },
   selectedId: null,
-  designName: 'My Garden',
+  designName: 'plotboard',
 
   addBed: (templateId, x, y) => {
     const template = BED_TEMPLATES.find((t) => t.id === templateId);

@@ -5,5 +5,5 @@ html, body, #root {
   margin: 0;
   overflow: hidden;
   background: #111;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: 'Nunito', system-ui, -apple-system, sans-serif;
 }

@@ -44,10 +44,15 @@ export default function Toolbar({ stageRef, onStartTour }: Props) {
 
   return (
     <div data-tour="toolbar" className="h-12 bg-[#1c1c1e] border-b border-white/10 text-white flex items-center px-4 gap-2 shrink-0">
+      <span className="font-bold text-sm tracking-tight select-none">
+        <span style={{ color: '#fcf6b6' }}>plot</span><span style={{ color: '#eb7c0d' }}>board</span>
+      </span>
+
       <input
-        className="bg-transparent text-white font-semibold text-sm border-b border-transparent hover:border-white/20 focus:border-amber-400/60 focus:outline-none px-1 w-40 transition-colors"
+        className="bg-transparent text-white/60 text-xs border-b border-transparent hover:border-white/20 focus:border-white/30 focus:outline-none px-1 w-32 transition-colors"
         value={designName}
         onChange={(e) => setDesignName(e.target.value)}
+        title="Design name"
       />
 
       <div className="w-px h-5 bg-white/10 mx-1" />
@@ -115,6 +120,16 @@ export default function Toolbar({ stageRef, onStartTour }: Props) {
       >
         Export PNG
       </button>
+
+      <a
+        href="https://forms.gle/yoUWNuuZ6R17prWc9"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="px-2 py-1 rounded text-xs bg-orange-500 hover:bg-orange-400 text-white transition-colors"
+        title="Share feedback"
+      >
+        Feedback
+      </a>
     </div>
   );
 }
